@@ -425,6 +425,7 @@ class AdversarialULTrainer(SFTTrainer):
         # we can use the same perturbation as for the away loss (adversarial attack that triggers harmful target)
         # but we will calculate the loss for the safe target
         # TODO this function wil throw an error if the instruction of toward_inputs and away_inputs is tokenized differently!
+        # why do we need this?
         vocab_size = self.embed_weights.shape[0]
         embedding_size = self.embed_weights.shape[1]
 

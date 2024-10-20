@@ -131,6 +131,9 @@ class EmbeddingSpaceAttack:
         self.loss_fct = torch.nn.CrossEntropyLoss()
 
     def attack(self, model, input_ids, target_ids, attention_mask):
+        # input_ids: away input_ids
+        # target_ids: away labels
+
         # save losses and responses
         best_loss = torch.inf
         all_losses = []
@@ -164,6 +167,7 @@ class EmbeddingSpaceAttack:
 
         for i in range(self.iters):
             opt.zero_grad()
+            # apply the mask to adv_pertrubation and add to the clean input embeddings
             adv_embeds = self.get_adv_embeddings(input_embeds, adv_perturbation, adv_perturbation_mask)
             logits, loss = self.calc_loss(i, model, adv_embeds, target_one_hot, attention_mask, loss_mask)
             loss.backward()
@@ -195,7 +199,7 @@ class EmbeddingSpaceAttack:
             self.debug_output(target_ids, logits, attention_mask)
 
         return (
-            input_embeds.detach(),
+            input_embeds.detach(), # why detach?
             adv_perturbation.detach(),
             adv_perturbation_mask.detach(),
             all_losses,
@@ -203,6 +207,8 @@ class EmbeddingSpaceAttack:
         )
 
     def calc_loss(self, i, model, input_embeds, target_one_hot, attention_mask, loss_mask, log_debug=True):
+        # i is the iter number
+        # input_ embeds is the input embedding
         output = model(inputs_embeds=input_embeds, attention_mask=attention_mask)
         logits = output.logits  # ignore predicted token (not in targets)
 
@@ -295,7 +301,7 @@ class EmbeddingSpaceAttack:
         return loss_mask
 
     def init_perturbation(self, input_ids, target_ids, attention_mask):
-        target_mask = target_ids > 0
+        target_mask = target_ids > 0 # target mask should be equal to attention mask??
         input_mask = (~target_mask * attention_mask).to(bool)
         batch_size, num_input_tokens = input_ids.shape
         dtype = self.embed_weights.dtype
@@ -308,6 +314,7 @@ class EmbeddingSpaceAttack:
             adv_perturbation_mask = torch.zeros(
                 (batch_size, num_input_tokens), device=input_ids.device, dtype=input_ids.dtype
             )
+            # what is the input_mask used for?
             adv_perturbation_mask[input_mask] = 1
         elif self.init_type == "suffix":
             adv_perturbation = torch.randn(
@@ -437,5 +444,4 @@ class SignSGD(Optimizer):
                     sign = torch.sign(grad)
 
                     p.add_(other=sign, alpha=-group["lr"])
-
         return loss

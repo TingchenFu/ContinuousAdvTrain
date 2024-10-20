@@ -1,3 +1,6 @@
+# run experiment -> adversarial_training -> embedding attack
+# reuse the trl SFT trainer and modify to serve as the UL trainer
+
 from omegaconf import OmegaConf
 from typing import List, Optional, Any
 from dataclasses import dataclass, field
